@@ -49,6 +49,7 @@
 				<button type="button" id="getAuthToken" class="btn btn-primary">getAuthToken</button>
 				<button type="button" id="paymentReceived" class="btn btn-primary">paymentReceived</button>
 				<button type="button" id="auth" class="btn btn-primary">auth</button>
+				<button type="button" id="clearLog" class="btn btn-danger">Clear log</button>
 			</div>
 		</div>
 		<div class="info">
@@ -72,9 +73,7 @@
 				getLoginStatusCallback: function(status) {
                 addLog('getLoginStatus', status);
                 var el = document.getElementById('status');
-                if (status.status != 'ok'){
                     el.innerText = status.status;
-                }
             },
 				userInfoCallback: function(info) {addLog('userInfo', info);},
 				userProfileCallback: function(profile) {console.log('userProfileCallback'); console.log(profile);},
@@ -122,7 +121,13 @@
 			
 			$('#paymentFrameUrl').on('click', function(e) {
 				e.preventDefault();
-				externalApi.paymentFrameUrl();
+				externalApi.paymentFrame({
+                'scenario': 'top-up',
+                'merchant_param':{
+                    'virtual_amount': 100,
+                    'description': 'Пополнение 100 золотых'
+                }
+            });
 			});
 			
 			$('#getAuthToken').on('click', function(e) {
@@ -143,6 +148,10 @@
 			$('#auth').on('click', function(e) {
 				e.preventDefault();
 				externalApi.authUser();
+			});
+			
+			$('#clearLog').on('click', function(e) {
+				$('#log').empty();
 			});
 
 			iframeApi(callbacks).then(connected, error);
