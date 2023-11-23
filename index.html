@@ -8,18 +8,55 @@
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-    </head>
+        <style type="text/css">
+        .ctrls {
+            float: left;
+            width: 500px;
+        }
+        .info {
+            float: left;
+            width: 700px;
+        }
+        .clear {
+            clear: both;
+        }
+        .method {
+            color: green;
+        }
+        .response {
+            color: green;
+            word-break: break-all;
+        }
+        .sysinfo {
+            color: blue;
+        }
+        .method {
+            color: red;
+        }
+        #status {
+            color: red;
+        }
+    </style>
+	</head>
     <body>
-		<div class="btn-group-vertical">
-			<button type="button" id="register" class="btn btn-primary">register</button>
-			<button type="button" id="auth" class="btn btn-primary">auth</button>
-			<button type="button" id="profile" class="btn btn-primary">profile</button>
-			<button type="button" id="getLoginStatus" class="btn btn-primary">getLoginStatus</button>
-			<button type="button" id="userInfo" class="btn btn-primary">userInfo</button>
-			<button type="button" id="paymentFrame" class="btn btn-primary">paymentFrame</button>
-			<button type="button" id="getAuthToken" class="btn btn-primary">getAuthToken</button>
+		<div class="ctrls">
+			<div class="btn-group-vertical">
+				<button type="button" id="getLoginStatus" class="btn btn-primary">getLoginStatus</button>
+				<button type="button" id="userInfo" class="btn btn-primary">userInfo</button>
+				<button type="button" id="profile" class="btn btn-primary">profile</button>
+				<button type="button" id="register" class="btn btn-primary">register</button>
+				<button type="button" id="paymentFrameUrl" class="btn btn-primary">paymentFrameUrl</button>
+				<button type="button" id="getAuthToken" class="btn btn-primary">getAuthToken</button>
+				<button type="button" id="paymentReceived" class="btn btn-primary">paymentReceived</button>
+				<button type="button" id="auth" class="btn btn-primary">auth</button>
+			</div>
 		</div>
-			
+		<div class="info">
+			<p><span class="sysinfo">Current user status:</span> <span id="status">-</span></p>
+			<div id="log"></div>
+			<iframe src="" id="payment" width="550" height="700" frameborder="0"></iframe>
+		</div>
+		<div class="clear"></div>
 	<script>
 		(function apiHandshake(iframeApi) {
 			if (typeof iframeApi === 'undefined') {
@@ -32,16 +69,25 @@
 			var callbacks = {
 				appid: 32441,
 
-				getLoginStatusCallback: function(status) {console.log('getLoginStatusCallback'); console.log(status);},
-				userInfoCallback: function(info) {console.log('userInfoCallback'); console.log(info);},
+				getLoginStatusCallback: function(status) {
+                addLog('getLoginStatus', status);
+                var el = document.getElementById('status');
+                if (status.status != 'ok'){
+                    el.innerText = status.status;
+                }
+            },
+				userInfoCallback: function(info) {addLog('userInfo', info);},
 				userProfileCallback: function(profile) {console.log('userProfileCallback'); console.log(profile);},
 				registerUserCallback: function(info) { console.log('registerUserCallback'); console.log(info);},
-				paymentFrameUrlCallback: function(url) {console.log('paymentFrameUrlCallback'); console.log(url);},
-				getAuthTokenCallback: function(token) {console.log('getAuthTokenCallback'); console.log(token);},
-				paymentReceivedCallback: function(data) {console.log('paymentReceivedCallback');console.log(data);},
+				paymentFrameUrlCallback: function(url) {
+					$('#payment').attr('src', url);
+					addLog('paymentFrameUrlCallback', url);
+				},
+				getAuthTokenCallback: function(token) {addLog('getAuthTokenCallback', token);},
+				paymentReceivedCallback: function(data) {addLog('paymentReceivedCallback', data);},
 				paymentWindowClosedCallback: function() {console.log('paymentWindowClosedCallback');},
 				userConfirmCallback: function() {console.log('userConfirmCallback');},
-				paymentFrameItem: function(object) {console.log('paymentFrameItem');console.log(object);},
+				paymentFrameItem: function(object) {addLog('paymentFrameItem', object);},
 				getGameInventoryItems: function() {console.log('getGameInventoryItems');}
 			};
 
@@ -52,23 +98,9 @@
 			function connected(api) {
 				externalApi = api;
 			}
-
-			// пример вызова действия "Регистрация"
-			$('#register').on('click', function(e) {
+			$('#getLoginStatus').on('click', function(e) {
 				e.preventDefault();
-				externalApi.registerUser();
-			});
-
-			// пример вызова действия "Вход"
-			$('#auth').on('click', function(e) {
-				e.preventDefault();
-				externalApi.authUser();
-			});
-
-			// пример получения профиля
-			$('#profile').on('click', function(e) {
-				e.preventDefault();
-				externalApi.userProfile();
+				externalApi.getLoginStatus();
 			});
 			
 			$('#userInfo').on('click', function(e) {
@@ -76,12 +108,19 @@
 				externalApi.userInfo();
 			});
 			
-			$('#getLoginStatus').on('click', function(e) {
+			// пример получения профиля
+			$('#profile').on('click', function(e) {
 				e.preventDefault();
-				externalApi.getLoginStatus();
+				externalApi.userProfile();
 			});
 			
-			$('#paymentFrame').on('click', function(e) {
+			// пример вызова действия "Регистрация"
+			$('#register').on('click', function(e) {
+				e.preventDefault();
+				externalApi.registerUser();
+			});
+			
+			$('#paymentFrameUrl').on('click', function(e) {
 				e.preventDefault();
 				externalApi.paymentFrameUrl();
 			});
@@ -90,9 +129,28 @@
 				e.preventDefault();
 				externalApi.getAuthToken();
 			});
+			
+			$('#paymentReceived').on('click', function(e) {
+				e.preventDefault();
+				externalApi.paymentReceived();
+			});
+			
+			$('#paymentWindowClosed').on('click', function(e) {
+				e.preventDefault();
+				externalApi.paymentWindowClosed();
+			});
+			// пример вызова действия "Вход"
+			$('#auth').on('click', function(e) {
+				e.preventDefault();
+				externalApi.authUser();
+			});
 
 			iframeApi(callbacks).then(connected, error);
 		}(window.iframeApi));
+		
+	function addLog(method, data){
+        $('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
+    }
 	</script>
     </body>
 </html>
