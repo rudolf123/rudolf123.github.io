@@ -158,8 +158,9 @@
 			//При значении false или undefined будет выбрано стандартное поведение (т.е. будет показана реклама в формате advideoreward). 
 				config =
 				  {
-					  sources: [str 'admanSource,admanagerSource' | 'admanSource' | 'admanagerSource'],
-					  interstitial: boolean
+					  //sources: ['admanSource,admanagerSource' | 'admanSource' | 'admanagerSource'],
+					  sources: 'admanSource,admanagerSource',
+					  interstitial: true
 				  }
 				e.preventDefault();
 				externalApi.showAds(config);
