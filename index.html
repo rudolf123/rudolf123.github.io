@@ -49,6 +49,7 @@
 				<button type="button" id="getAuthToken" class="btn btn-primary">getAuthToken</button>
 				<button type="button" id="paymentReceived" class="btn btn-primary">paymentReceived</button>
 				<button type="button" id="auth" class="btn btn-primary">auth</button>
+				<button type="button" id="showAd" class="btn btn-warning">Show Ad</button>
 				<button type="button" id="clearLog" class="btn btn-danger">Clear log</button>
 			</div>
 		</div>
@@ -87,7 +88,9 @@
 				paymentWindowClosedCallback: function() {console.log('paymentWindowClosedCallback');},
 				userConfirmCallback: function() {console.log('userConfirmCallback');},
 				paymentFrameItem: function(object) {addLog('paymentFrameItem', object);},
-				getGameInventoryItems: function() {console.log('getGameInventoryItems');}
+				getGameInventoryItems: function() {console.log('getGameInventoryItems');},
+				adsCallback: function(context) {addLog('adsCallback', context);},
+				
 			};
 
 			function error(err) {
@@ -126,8 +129,8 @@
                 'merchant_param':{
                     'virtual_amount': 100,
                     'description': 'Пополнение 100 золотых'
-                }
-            });
+					}
+				});
 			});
 			
 			$('#getAuthToken').on('click', function(e) {
@@ -148,6 +151,18 @@
 			$('#auth').on('click', function(e) {
 				e.preventDefault();
 				externalApi.authUser();
+			});
+			
+			$('#showAd').on('click', function(e) {
+			//При использовании параметра interstitial: true ролик будет показан без футера и сообщений, связанных с получением вознаграждения. 
+			//При значении false или undefined будет выбрано стандартное поведение (т.е. будет показана реклама в формате advideoreward). 
+				config =
+				  {
+					  sources: [str 'admanSource,admanagerSource' | 'admanSource' | 'admanagerSource'],
+					  interstitial: boolean
+				  }
+				e.preventDefault();
+				externalApi.showAds(config);
 			});
 			
 			$('#clearLog').on('click', function(e) {
