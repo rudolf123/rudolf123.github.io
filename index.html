@@ -76,9 +76,9 @@
                 var el = document.getElementById('status');
                     el.innerText = status.status;
             },
-				userInfoCallback: function(info) {addLog('userInfo', info);},
-				userProfileCallback: function(profile) {console.log('userProfileCallback'); console.log(profile);},
-				registerUserCallback: function(info) { console.log('registerUserCallback'); console.log(info);},
+				userInfoCallback: function(info) {addLog('userInfoCallback', info);},
+				userProfileCallback: function(profile) {addLog('userProfileCallback', profile);},
+				registerUserCallback: function(info) { addLog('registerUserCallback', info);},
 				paymentFrameUrlCallback: function(url) {
 					$('#payment').attr('src', url);
 					addLog('paymentFrameUrlCallback', url);
