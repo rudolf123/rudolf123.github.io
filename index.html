@@ -9,5 +9,60 @@
     </head>
     <body>
         Test
+			
+	<script>
+		(function apiHandshake(iframeApi) {
+			if (typeof iframeApi === 'undefined') {
+				console.log('Cannot find iframeApi function, are we inside an iframe?');
+				return;
+			}
+
+			var externalApi = null;
+
+			var callbacks = {
+				appid: 32441,
+
+				getLoginStatusCallback: function(status) {},
+				userInfoCallback: function(info) {},
+				userProfileCallback: function(profile) {},
+				registerUserCallback: function(info) {},
+				paymentFrameUrlCallback: function(url) {},
+				getAuthTokenCallback: function(token) {},
+				paymentReceivedCallback: function(data) {},
+				paymentWindowClosedCallback: function() {},
+				userConfirmCallback: function() {},
+				paymentFrameItem: function(object) {},
+				getGameInventoryItems: function() {}
+			};
+
+			function error(err) {
+				throw new Error('Could not init external api ' + err);
+			}
+
+			function connected(api) {
+				externalApi = api;
+			}
+
+			// пример вызова действия "Регистрация"
+			$('#register').on('click', function(e) {
+				e.preventDefault();
+				externalApi.registerUser();
+			});
+
+			// пример вызова действия "Вход"
+			$('#auth').on('click', function(e) {
+				e.preventDefault();
+				externalApi.authUser();
+			});
+
+			// пример получения профиля
+			$('#profile').on('click', function(e) {
+				e.preventDefault();
+				externalApi.userProfile();
+			});
+
+			iframeApi(callbacks).then(connected, error);
+		}(window.iframeApi));
+	</script>
     </body>
 </html>
