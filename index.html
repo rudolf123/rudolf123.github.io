@@ -42,7 +42,7 @@
     <body>
 		<div class="container">
 			<div class="row">
-				<div class="vk_ctrls col-sm">
+				<div id="vk_ctrls" class="col-sm">
 					<h3>VK_API</h3>
 					<div class="btn-group-vertical">
 						<button type="button" id="vk_getLoginStatus" class="btn btn-primary">getLoginStatus</button>
@@ -57,7 +57,7 @@
 					</div>
 				</div>
 				
-				<div class="ok_ctrls col-sm">
+				<div id="ok_ctrls" class="col-sm">
 					<h3>OK_API</h3>
 					<div class="btn-group-vertical">
 						<button type="button" id="ok_loadAd" class="btn btn-primary">loadAd (rewarded ad)</button>
@@ -83,8 +83,19 @@
 	<script>
 		var vkplayApi = null;
 		var okApi = null;
+		var parentURL = null;
 		
 		$(document).ready(function(){
+			parentURL = (window.location != window.parent.location)
+				? document.referrer
+				: document.location.href;
+			
+			if(parentURL.includes("ok.ru"))
+				$( "#vk_ctrls" ).hide();
+				
+			if(parentURL.includes("vkplay.ru"))
+				$( "#ok_ctrls" ).hide();
+			
 			var rParams = FAPI.Util.getRequestParameters();
 			FAPI.init(rParams["api_server"], rParams["apiconnection"],
 
