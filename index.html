@@ -113,6 +113,7 @@
           progressBarFull.style.width = 100 * progress + "%";
         }).then((unityInstance) => {
 		  myGameInstance = unityInstance;
+		  myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', window.socialNetworkCode);
           loadingBar.style.display = "none";
           fullscreenButton.onclick = () => {
             unityInstance.SetFullscreen(1);
@@ -128,38 +129,31 @@
 	});
 	
 	function chooseSocialApi(){
-		let socialNetworkCode = '';
+		window.socialNetworkCode = '';
 		let parentURL = (window.location != window.parent.location)
 			? document.referrer
 			: document.location.href;
 		
 		if(parentURL.includes("yandex.ru"))
 		{
-			socialNetworkCode = "YA";
+			window.socialNetworkCode = "YA";
 			//$( "#vk_ctrls" ).hide();
 			//$( "#ok_ctrls" ).hide();
 		}
 		
 		if(parentURL.includes("ok.ru"))
 		{
-			socialNetworkCode = "OK";
+			window.socialNetworkCode = "OK";
 			//initOKApi();
 			//$( "#vk_ctrls" ).hide();
 		}	
 		
 		if(parentURL.includes("vkplay.ru"))
 		{
-			socialNetworkCode = "VKPLAY";
+			window.socialNetworkCode = "VKPLAY";
 			//initVKPlayApi();
 			//$( "#ok_ctrls" ).hide();
 		}	
-		
-		if(myGameInstance != null)
-			myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', socialNetworkCode);
-		else
-		{
-			console.log("Unity instance not initialized!!!");
-		}
 	}
 	
 	function addLog(method, data){
