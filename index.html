@@ -1,339 +1,171 @@
 <!DOCTYPE html>
-<html>
-    <head>
-		<meta http-equiv='cache-control' content='no-cache'> 
-		<meta http-equiv='expires' content='0'> 
-		<meta http-equiv='pragma' content='no-cache'>
-        <script type="text/javascript" src="https://vkplay.ru/app/32441/static/mailru.core.js"></script>
-		<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js" defer="defer"></script>
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-        <style type="text/css">
-        .ctrls {
-            float: left;
-            width: 500px;
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Unity WebGL Player | YandexGamesTemplate</title>
+	<script type="text/javascript" src="https://vkplay.ru/app/32441/static/mailru.core.js"></script>
+	<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js" defer="defer"></script>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+	<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    <link rel="shortcut icon" href="TemplateData/favicon.ico">
+    <link rel="stylesheet" href="TemplateData/style.css">
+  </head>
+  <body>
+    <div id="unity-container" class="unity-desktop">
+      <canvas id="unity-canvas" width=960 height=600></canvas>
+      <div id="unity-loading-bar">
+        <div id="unity-logo"></div>
+        <div id="unity-progress-bar-empty">
+          <div id="unity-progress-bar-full"></div>
+        </div>
+      </div>
+      <div id="unity-warning"> </div>
+      <div id="unity-footer">
+        <div id="unity-webgl-logo"></div>
+        <div id="unity-fullscreen-button"></div>
+        <div id="unity-build-title">YandexGamesTemplate</div>
+      </div>
+    </div>
+    <script>
+      var container = document.querySelector("#unity-container");
+      var canvas = document.querySelector("#unity-canvas");
+      var loadingBar = document.querySelector("#unity-loading-bar");
+      var progressBarFull = document.querySelector("#unity-progress-bar-full");
+      var fullscreenButton = document.querySelector("#unity-fullscreen-button");
+      var warningBanner = document.querySelector("#unity-warning");
+		var vkplayApi = null;
+		var okApi = null;
+		var myGameInstance = null;
+      // Shows a temporary message banner/ribbon for a few seconds, or
+      // a permanent error message on top of the canvas if type=='error'.
+      // If type=='warning', a yellow highlight color is used.
+      // Modify or remove this function to customize the visually presented
+      // way that non-critical warnings and error messages are presented to the
+      // user.
+      function unityShowBanner(msg, type) {
+        function updateBannerVisibility() {
+          warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
         }
-        .info {
-            float: left;
-            width: 700px;
+        var div = document.createElement('div');
+        div.innerHTML = msg;
+        warningBanner.appendChild(div);
+        if (type == 'error') div.style = 'background: red; padding: 10px;';
+        else {
+          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          setTimeout(function() {
+            warningBanner.removeChild(div);
+            updateBannerVisibility();
+          }, 5000);
         }
-        .clear {
-            clear: both;
-        }
-        .method {
-            color: green;
-        }
-        .response {
-            color: green;
-            word-break: break-all;
-        }
-        .sysinfo {
-            color: blue;
-        }
-        .method {
-            color: red;
-        }
-        #status {
-            color: red;
-        }
-    </style>
-	</head>
-    <body>
-		<div class="container">
-			<div class="row">
-				<div id="vk_ctrls" class="col-sm">
-					<h3>VK_API</h3>
-					<div class="btn-group-vertical">
-						<button type="button" id="vk_getLoginStatus" class="btn btn-primary">getLoginStatus</button>
-						<button type="button" id="vk_userInfo" class="btn btn-primary">userInfo</button>
-						<button type="button" id="vk_profile" class="btn btn-primary">profile</button>
-						<button type="button" id="vk_register" class="btn btn-primary">register</button>
-						<button type="button" id="vk_paymentFrameUrl" class="btn btn-primary">paymentFrameUrl</button>
-						<button type="button" id="vk_getAuthToken" class="btn btn-primary">getAuthToken</button>
-						<button type="button" id="vk_paymentReceived" class="btn btn-primary">paymentReceived</button>
-						<button type="button" id="vk_auth" class="btn btn-primary">auth</button>
-						<button type="button" id="vk_showAd" class="btn btn-warning">Show Ad</button>
-					</div>
-				</div>
-				
-				<div id="ok_ctrls" class="col-sm">
-					<h3>OK_API</h3>
-					<div class="btn-group-vertical">
-						<button type="button" id="ok_loadAd" class="btn btn-primary">loadAd (rewarded ad)</button>
-						<button type="button" id="ok_showLoadedAd" class="btn btn-primary">showLoadedAd (rewarded ad)</button>
-						<button type="button" id="ok_showAd" class="btn btn-primary">showAd (interstitial ad)</button>
-						<button type="button" id="ok_requestBannerAds" class="btn btn-primary">requestBannerAds</button>
-						<button type="button" id="ok_showBannerAds" class="btn btn-primary">showBannerAds</button>
-						<button type="button" id="ok_hideBannerAds" class="btn btn-primary">hideBannerAds </button>
-						<button type="button" id="ok_isBannerAdsVisible" class="btn btn-primary">isBannerAdsVisible </button>
-						<button type="button" id="ok_getBannerFormats" class="btn btn-primary">getBannerFormats</button>
-						<button type="button" id="ok_isAdBlockEnabled" class="btn btn-primary">isAdBlockEnabled</button>
-					</div>
-				</div>
-				<div class="info col-sm">
-					<button type="button" id="clearLog" class="btn btn-danger">Clear log</button>
-					<p><span class="sysinfo">Current user status:</span> <span id="status">-</span></p>
-					<div id="log"></div>
-					<iframe src="" id="payment" width="550" height="700" frameborder="0"></iframe>
-				</div>
-				<div class="clear"></div>
-			</div>
-		</div>
-	<script>
-		let vkplayApi = null;
-		let okApi = null;
-		let myGameInstance = null;
-		
-		$(document).ready(function(){
-			chooseSocialApi();
-		});
-		
-		function chooseSocialApi(){
-			let socialNetworkCode = '';
-			let parentURL = (window.location != window.parent.location)
-				? document.referrer
-				: document.location.href;
-			
-			if(parentURL.includes("yandex.ru"))
-			{
-				socialNetworkCode = "YA";
-				$( "#vk_ctrls" ).hide();
-				$( "#ok_ctrls" ).hide();
-			}
-			
-			if(parentURL.includes("ok.ru"))
-			{
-				socialNetworkCode = "OK";
-				initOKApi();
-				$( "#vk_ctrls" ).hide();
-			}	
-			
-			if(parentURL.includes("vkplay.ru"))
-			{
-				socialNetworkCode = "VKPLAY";
-				initVKPlayApi();
-				setuserInfoCallback();
-				setAuthTokenCallback();
-				$( "#ok_ctrls" ).hide();
-			}	
-			
-			if(myGameInstance != null)
-				myGameInstance.SendMessage('SocialApiManager', 'SetSocialApi', socialNetworkCode);
-			else
-			{
-				console.log("Unity instance not initialized!!!");
-			}
-		}
-		
-		function initOKApi()
-		{
-			addLog("initOKApi", "Инициализация OK API");
-			let rParams = FAPI.Util.getRequestParameters();
-			FAPI.init(rParams["api_server"], rParams["apiconnection"],
+        updateBannerVisibility();
+      }
 
-				function() {
-					addLog("FAPI.init", "Инициализация OK API прошла успешно");
-					  
-					$('#ok_loadAd').on('click', function(e) {
-						e.preventDefault();
-						FAPI.UI.loadAd();
-					});
-					
-					$('#ok_showLoadedAd').on('click', function(e) {
-						e.preventDefault();
-						FAPI.UI.showLoadedAd();
-					});
-					
-					$('#ok_showAd').on('click', function(e) {
-						e.preventDefault();
-						FAPI.UI.showAd();
-					});
-					
-					$('#ok_requestBannerAds').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("requestBannerAds")
-					});
-					
-					$('#ok_showBannerAds').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("showBannerAds");
-					});
-					
-					$('#ok_hideBannerAds').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("hideBannerAds");
-					});
-					
-					$('#ok_isBannerAdsVisible').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("isBannerAdsVisible");
-					});
-					
-					$('#ok_getBannerFormats').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("getBannerFormats")
-					});
-					
-					$('#ok_isAdBlockEnabled').on('click', function(e) {
-						e.preventDefault();
-						FAPI.invokeUIMethod("isAdBlockEnabled");
-					});
-				},
+      var buildUrl = "Build";
+      var loaderUrl = buildUrl + "/Build.loader.js";
+      var config = {
+        dataUrl: buildUrl + "/Build.data",
+        frameworkUrl: buildUrl + "/Build.framework.js",
+        codeUrl: buildUrl + "/Build.wasm",
+        streamingAssetsUrl: "StreamingAssets",
+        companyName: "DefaultCompany",
+        productName: "YandexGamesTemplate",
+        productVersion: "1.0",
+        showBanner: unityShowBanner,
+      };
 
-				function(error) {
-				  addLog("FAPI.init","Ошибка инициализации");
-				}
-			);
-		}
+      // By default Unity keeps WebGL canvas render target size matched with
+      // the DOM size of the canvas element (scaled by window.devicePixelRatio)
+      // Set this to false if you want to decouple this synchronization from
+      // happening inside the engine, and you would instead like to size up
+      // the canvas DOM size and WebGL render target sizes yourself.
+      // config.matchWebGLToCanvasSize = false;
+
+      if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+        // Mobile device style: fill the whole browser client area with the game canvas:
+
+        var meta = document.createElement('meta');
+        meta.name = 'viewport';
+        meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
+        document.getElementsByTagName('head')[0].appendChild(meta);
+        container.className = "unity-mobile";
+        canvas.className = "unity-mobile";
+
+        // To lower canvas resolution on mobile devices to gain some
+        // performance, uncomment the following line:
+        // 
+
+        unityShowBanner('WebGL builds are not supported on mobile devices.');
+      } else {
+        // Desktop style: Render the game canvas in a window that can be maximized to fullscreen:
+
+        canvas.style.width = "960px";
+        canvas.style.height = "600px";
+      }
+
+      loadingBar.style.display = "block";
+
+      var script = document.createElement("script");
+      script.src = loaderUrl;
+      script.onload = () => {
+        createUnityInstance(canvas, config, (progress) => {
+          progressBarFull.style.width = 100 * progress + "%";
+        }).then((unityInstance) => {
+		  myGameInstance = unityInstance;
+          loadingBar.style.display = "none";
+          fullscreenButton.onclick = () => {
+            unityInstance.SetFullscreen(1);
+          };
+        }).catch((message) => {
+          alert(message);
+        });
+      };
+      document.body.appendChild(script);
 	
-		function setuserInfoCallback(){
-			var callbacks = {
-				userInfoCallback: function(info) {addLog('userInfoCallback', info);},
-			}
-			
-			window.iframeApi(callbacks);
-		}
-		
-		function setAuthTokenCallback(){
-			var callbacks = {
-				getAuthTokenCallback: function(token) {addLog('getAuthTokenCallback', token);},
-			}
-			
-			window.iframeApi(callbacks);
-		}
+	$(document).ready(function(){
+		chooseSocialApi();
+	});
 	
-		function initVKPlayApi() {
-			addLog("initVKPlayApi", "Инициализация VKPlay API");
+	function chooseSocialApi(){
+		let socialNetworkCode = '';
+		let parentURL = (window.location != window.parent.location)
+			? document.referrer
+			: document.location.href;
 		
-			if (typeof window.iframeApi === 'undefined') {
-				console.log('Cannot find iframeApi function, are we inside an iframe?');
-				return;
-			}
-
-			var externalApi = null;
-
-			var callbacks = {
-				appid: 32441,
-/*
-				getLoginStatusCallback: function(status) {
-					addLog('getLoginStatus', status);
-					var el = document.getElementById('status');
-						el.innerText = status.status;
-				},
-				userInfoCallback: function(info) {addLog('userInfoCallback', info);},
-				userProfileCallback: function(profile) {addLog('userProfileCallback', profile);},
-				registerUserCallback: function(info) { addLog('registerUserCallback', info);},
-				paymentFrameUrlCallback: function(url) {
-					$('#payment').attr('src', url);
-					addLog('paymentFrameUrlCallback', url);
-				},
-				getAuthTokenCallback: function(token) {addLog('getAuthTokenCallback', token);},
-				paymentReceivedCallback: function(data) {addLog('paymentReceivedCallback', data);},
-				paymentWindowClosedCallback: function() {console.log('paymentWindowClosedCallback');},
-				userConfirmCallback: function() {console.log('userConfirmCallback');},
-				paymentFrameItem: function(object) {addLog('paymentFrameItem', object);},
-				getGameInventoryItems: function() {console.log('getGameInventoryItems');},
-				adsCallback: function(context) {addLog('adsCallback', context);},
-				*/
-			};
-
-			function error(err) {
-				throw new Error('Could not init external api ' + err);
-			}
-
-			function connected(api) {
-				externalApi = api;
-				vkplayApi = api;
-				addLog("initVKPlayApi:connected", "Инициализация VKPlay API прошла успешно");
-			}
-			$('#vk_getLoginStatus').on('click', function(e) {
-				e.preventDefault();
-				externalApi.getLoginStatus();
-			});
-			
-			$('#vk_userInfo').on('click', function(e) {
-				e.preventDefault();
-				externalApi.userInfo();
-			});
-			
-			// пример получения профиля
-			$('#vk_profile').on('click', function(e) {
-				e.preventDefault();
-				externalApi.userProfile();
-			});
-			
-			// пример вызова действия "Регистрация"
-			$('#vk_register').on('click', function(e) {
-				e.preventDefault();
-				externalApi.registerUser();
-			});
-			
-			$('#vk_paymentFrameUrl').on('click', function(e) {
-				e.preventDefault();
-				externalApi.paymentFrame({
-                'scenario': 'top-up',
-                'merchant_param':{
-                    'virtual_amount': 100,
-                    'amount': 100,
-                    'description': 'Пополнение 100 золотых'
-					}
-				});
-			});
-			
-			$('#vk_getAuthToken').on('click', function(e) {
-				e.preventDefault();
-				externalApi.getAuthToken();
-			});
-			
-			$('#vk_paymentReceived').on('click', function(e) {
-				e.preventDefault();
-				externalApi.paymentReceived();
-			});
-			
-			// пример вызова действия "Вход"
-			$('#vk_auth').on('click', function(e) {
-				e.preventDefault();
-				externalApi.authUser();
-			});
-			
-			$('#vk_showAd').on('click', function(e) {
-			//При использовании параметра interstitial: true ролик будет показан без футера и сообщений, связанных с получением вознаграждения. 
-			//При значении false или undefined будет выбрано стандартное поведение (т.е. будет показана реклама в формате advideoreward). 
-				config =
-				  {
-					  //sources: ['admanSource,admanagerSource' | 'admanSource' | 'admanagerSource'],
-					  sources: 'admanSource',
-					  interstitial: false
-				  }
-				e.preventDefault();
-				externalApi.showAds();
-			});
-			
-			$('#clearLog').on('click', function(e) {
-				$('#log').empty();
-			});
-
-			window.iframeApi(callbacks).then(connected, error);
-		}
-		
-		function addLog(method, data){
-			$('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
-		}
-		
-		function showAdd()
+		if(parentURL.includes("yandex.ru"))
 		{
-			if(vkplayApi != null)
-				vkplayApi.showAds();
-			if(FAPI != null)
-				FAPI.UI.showAd();
+			socialNetworkCode = "YA";
+			$( "#vk_ctrls" ).hide();
+			$( "#ok_ctrls" ).hide();
 		}
 		
-		function API_callback(method, result, data)
+		if(parentURL.includes("ok.ru"))
 		{
-			addLog(method, data);
-		}
+			socialNetworkCode = "OK";
+			initOKApi();
+			$( "#vk_ctrls" ).hide();
+		}	
 		
-	</script>
-    </body>
+		if(parentURL.includes("vkplay.ru"))
+		{
+			socialNetworkCode = "VKPLAY";
+			initVKPlayApi();
+			$( "#ok_ctrls" ).hide();
+		}	
+		
+		if(myGameInstance != null)
+			myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', socialNetworkCode);
+		else
+		{
+			console.log("Unity instance not initialized!!!");
+		}
+	}
+	
+	function addLog(method, data){
+		console.log(method + ":" + JSON.stringify(data));
+		//$('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
+	}
+    </script>
+  </body>
 </html>
