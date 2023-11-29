@@ -81,26 +81,57 @@
 			</div>
 		</div>
 	<script>
-		var vkplayApi = null;
-		var okApi = null;
-		var parentURL = null;
+		let vkplayApi = null;
+		let okApi = null;
+		let myGameInstance = null;
 		
 		$(document).ready(function(){
-			parentURL = (window.location != window.parent.location)
+			chooseSocialApi();
+		});
+		
+		function chooseSocialApi(){
+			let socialNetworkCode = '';
+			let parentURL = (window.location != window.parent.location)
 				? document.referrer
 				: document.location.href;
 			
-			if(parentURL.includes("ok.ru"))
+			if(parentURL.includes("yandex.ru"))
+			{
+				socialNetworkCode = "YA";
 				$( "#vk_ctrls" ).hide();
-				
-			if(parentURL.includes("vkplay.ru"))
 				$( "#ok_ctrls" ).hide();
+			}
 			
-			var rParams = FAPI.Util.getRequestParameters();
+			if(parentURL.includes("ok.ru"))
+			{
+				socialNetworkCode = "OK";
+				initOKApi();
+				$( "#vk_ctrls" ).hide();
+			}	
+			
+			if(parentURL.includes("vkplay.ru"))
+			{
+				socialNetworkCode = "VKPLAY";
+				initVKPlayApi();
+				$( "#ok_ctrls" ).hide();
+			}	
+			
+			if(myGameInstance != null)
+				myGameInstance.SendMessage('SocialApiManager', 'SetSocialApi', socialNetworkCode);
+			else
+			{
+				console.log("Unity instance not initialized!!!");
+			}
+		}
+		
+		function initOKApi()
+		{
+			addLog("initOKApi", "Инициализация OK API");
+			let rParams = FAPI.Util.getRequestParameters();
 			FAPI.init(rParams["api_server"], rParams["apiconnection"],
 
 				function() {
-					addLog("FAPI.init", "Инициализация прошла успешно");
+					addLog("FAPI.init", "Инициализация OK API прошла успешно");
 					  
 					$('#ok_loadAd').on('click', function(e) {
 						e.preventDefault();
@@ -152,10 +183,12 @@
 				  addLog("FAPI.init","Ошибка инициализации");
 				}
 			);
-		});
+		}
+	
+		function initVKPlayApi() {
+			addLog("initVKPlayApi", "Инициализация VKPlay API");
 		
-		(function apiHandshake(iframeApi) {
-			if (typeof iframeApi === 'undefined') {
+			if (typeof window.iframeApi === 'undefined') {
 				console.log('Cannot find iframeApi function, are we inside an iframe?');
 				return;
 			}
@@ -262,8 +295,8 @@
 				$('#log').empty();
 			});
 
-			iframeApi(callbacks).then(connected, error);
-		}(window.iframeApi));
+			window.iframeApi(callbacks).then(connected, error);
+		}
 		
 		function addLog(method, data){
 			$('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
