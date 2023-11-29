@@ -113,6 +113,8 @@
 			{
 				socialNetworkCode = "VKPLAY";
 				initVKPlayApi();
+				setuserInfoCallback();
+				setAuthTokenCallback();
 				$( "#ok_ctrls" ).hide();
 			}	
 			
@@ -185,6 +187,22 @@
 			);
 		}
 	
+		function setuserInfoCallback(){
+			var callbacks = {
+				userInfoCallback: function(info) {addLog('userInfoCallback', info);},
+			}
+			
+			window.iframeApi(callbacks);
+		}
+		
+		function setAuthTokenCallback(){
+			var callbacks = {
+				getAuthTokenCallback: function(token) {addLog('getAuthTokenCallback', token);},
+			}
+			
+			window.iframeApi(callbacks);
+		}
+	
 		function initVKPlayApi() {
 			addLog("initVKPlayApi", "Инициализация VKPlay API");
 		
@@ -197,7 +215,7 @@
 
 			var callbacks = {
 				appid: 32441,
-
+/*
 				getLoginStatusCallback: function(status) {
 					addLog('getLoginStatus', status);
 					var el = document.getElementById('status');
@@ -217,7 +235,7 @@
 				paymentFrameItem: function(object) {addLog('paymentFrameItem', object);},
 				getGameInventoryItems: function() {console.log('getGameInventoryItems');},
 				adsCallback: function(context) {addLog('adsCallback', context);},
-				
+				*/
 			};
 
 			function error(err) {
@@ -227,6 +245,7 @@
 			function connected(api) {
 				externalApi = api;
 				vkplayApi = api;
+				addLog("initVKPlayApi:connected", "Инициализация VKPlay API прошла успешно");
 			}
 			$('#vk_getLoginStatus').on('click', function(e) {
 				e.preventDefault();
