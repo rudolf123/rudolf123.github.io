@@ -7,6 +7,7 @@
         <script type="text/javascript" src="https://vkplay.ru/app/32441/static/mailru.core.js"></script>
 		<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js" defer="defer"></script>
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+		<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
 		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
         <style type="text/css">
@@ -43,17 +44,24 @@
 		<div class="container">
 			<div class="row">
 				<div id="vk_ctrls" class="col-sm">
-					<h3>VK_API</h3>
+					<h3>vk_API</h3>
 					<div class="btn-group-vertical">
-						<button type="button" id="vk_getLoginStatus" class="btn btn-primary">getLoginStatus</button>
-						<button type="button" id="vk_userInfo" class="btn btn-primary">userInfo</button>
-						<button type="button" id="vk_profile" class="btn btn-primary">profile</button>
-						<button type="button" id="vk_register" class="btn btn-primary">register</button>
-						<button type="button" id="vk_paymentFrameUrl" class="btn btn-primary">paymentFrameUrl</button>
-						<button type="button" id="vk_getAuthToken" class="btn btn-primary">getAuthToken</button>
-						<button type="button" id="vk_paymentReceived" class="btn btn-primary">paymentReceived</button>
-						<button type="button" id="vk_auth" class="btn btn-primary">auth</button>
 						<button type="button" id="vk_showAd" class="btn btn-warning">Show Ad</button>
+					</div>
+				</div>
+				
+				<div id="vkplay_ctrls" class="col-sm">
+					<h3>vkplay_API</h3>
+					<div class="btn-group-vertical">
+						<button type="button" id="vkplay_getLoginStatus" class="btn btn-primary">getLoginStatus</button>
+						<button type="button" id="vkplay_userInfo" class="btn btn-primary">userInfo</button>
+						<button type="button" id="vkplay_profile" class="btn btn-primary">profile</button>
+						<button type="button" id="vkplay_register" class="btn btn-primary">register</button>
+						<button type="button" id="vkplay_paymentFrameUrl" class="btn btn-primary">paymentFrameUrl</button>
+						<button type="button" id="vkplay_getAuthToken" class="btn btn-primary">getAuthToken</button>
+						<button type="button" id="vkplay_paymentReceived" class="btn btn-primary">paymentReceived</button>
+						<button type="button" id="vkplay_auth" class="btn btn-primary">auth</button>
+						<button type="button" id="vkplay_showAd" class="btn btn-warning">Show Ad</button>
 					</div>
 				</div>
 				
@@ -94,18 +102,22 @@
 			let parentURL = (window.location != window.parent.location)
 				? document.referrer
 				: document.location.href;
+				
+			addLog("Try parse window.location: ", parentURL);
 			
 			if(parentURL.includes("yandex.ru"))
 			{
 				socialNetworkCode = "YA";
-				$( "#vk_ctrls" ).hide();
+				$( "#vkplay_ctrls" ).hide();
 				$( "#ok_ctrls" ).hide();
+				$( "#vk_ctrls" ).hide();
 			}
 			
 			if(parentURL.includes("ok.ru"))
 			{
 				socialNetworkCode = "OK";
 				initOKApi();
+				$( "#vkplay_ctrls" ).hide();
 				$( "#vk_ctrls" ).hide();
 			}	
 			
@@ -114,6 +126,15 @@
 				socialNetworkCode = "VKPLAY";
 				initVKPlayApi();
 				$( "#ok_ctrls" ).hide();
+				$( "#vk_ctrls" ).hide();
+			}	
+			
+			if(parentURL.includes("vk.com"))
+			{
+				socialNetworkCode = "VKPLAY";
+				initVKComApi();
+				$( "#ok_ctrls" ).hide();
+				$( "#vkplay_ctrls" ).hide();
 			}	
 			
 			if(myGameInstance != null)
@@ -184,6 +205,20 @@
 				}
 			);
 		}
+		
+		function initVKComApi(){
+			vkBridge.send('VKWebAppInit').then((data) => {
+				if (data.result) {
+				  // Обработка события в случае успеха
+				  addLog('VKWebAppInit: ', data);
+				} else {
+				  addLog('VKWebAppInit: ', data);
+				}
+			  })
+			  .catch((error) => {
+					addLog('VKWebAppInit: ', error);
+			  });
+		}
 	
 		function initVKPlayApi() {
 			addLog("initVKPlayApi", "Инициализация VKPlay API");
@@ -229,29 +264,29 @@
 				vkplayApi = api;
 				addLog("initVKPlayApi:connected", "Инициализация VKPlay API прошла успешно");
 			}
-			$('#vk_getLoginStatus').on('click', function(e) {
+			$('#vkplay_getLoginStatus').on('click', function(e) {
 				e.preventDefault();
 				externalApi.getLoginStatus();
 			});
 			
-			$('#vk_userInfo').on('click', function(e) {
+			$('#vkplay_userInfo').on('click', function(e) {
 				e.preventDefault();
 				externalApi.userInfo();
 			});
 			
 			// пример получения профиля
-			$('#vk_profile').on('click', function(e) {
+			$('#vkplay_profile').on('click', function(e) {
 				e.preventDefault();
 				externalApi.userProfile();
 			});
 			
 			// пример вызова действия "Регистрация"
-			$('#vk_register').on('click', function(e) {
+			$('#vkplay_register').on('click', function(e) {
 				e.preventDefault();
 				externalApi.registerUser();
 			});
 			
-			$('#vk_paymentFrameUrl').on('click', function(e) {
+			$('#vkplay_paymentFrameUrl').on('click', function(e) {
 				e.preventDefault();
 				externalApi.paymentFrame({
                 'scenario': 'top-up',
@@ -263,23 +298,23 @@
 				});
 			});
 			
-			$('#vk_getAuthToken').on('click', function(e) {
+			$('#vkplay_getAuthToken').on('click', function(e) {
 				e.preventDefault();
 				externalApi.getAuthToken();
 			});
 			
-			$('#vk_paymentReceived').on('click', function(e) {
+			$('#vkplay_paymentReceived').on('click', function(e) {
 				e.preventDefault();
 				externalApi.paymentReceived();
 			});
 			
 			// пример вызова действия "Вход"
-			$('#vk_auth').on('click', function(e) {
+			$('#vkplay_auth').on('click', function(e) {
 				e.preventDefault();
 				externalApi.authUser();
 			});
 			
-			$('#vk_showAd').on('click', function(e) {
+			$('#vkplay_showAd').on('click', function(e) {
 			//При использовании параметра interstitial: true ролик будет показан без футера и сообщений, связанных с получением вознаграждения. 
 			//При значении false или undefined будет выбрано стандартное поведение (т.е. будет показана реклама в формате advideoreward). 
 				config =
