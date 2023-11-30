@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<meta http-equiv='cache-control' content='no-cache'> 
+		<meta http-equiv='expires' content='0'> 
+		<meta http-equiv='pragma' content='no-cache'>
+        <script type="text/javascript" src="https://vkplay.ru/app/32441/static/mailru.core.js"></script>
+		<script type="text/javascript" src="https://api.ok.ru/js/fapi5.js" defer="defer"></script>
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+		<script src="https://unpkg.com/@vkontakte/vk-bridge/dist/browser.min.js"></script>
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+        <style type="text/css">
+        .ctrls {
+            float: left;
+            width: 500px;
+        }
+        .info {
+            float: left;
+            width: 700px;
+        }
+        .clear {
+            clear: both;
+        }
+        .method {
+            color: green;
+        }
+        .response {
+            color: green;
+            word-break: break-all;
+        }
+        .sysinfo {
+            color: blue;
+        }
+        .method {
+            color: red;
+        }
+        #status {
+            color: red;
+        }
+    </style>
+	</head>
+    <body>
+		<div class="container">
+			<div class="row">
+				<div id="vk_ctrls" class="col-sm">
+					<h3>vk_API</h3>
+					<div class="btn-group-vertical">
+						<button type="button" id="vk_loadAd" class="btn btn-primary">Load interstitial Ad</button>
+						<button type="button" id="vk_showAd" class="btn btn-primary">Show interstitial Ad</button>
+						<button type="button" id="vk_loadRewardAd" class="btn btn-primary">Load Reward Ad</button>
+						<button type="button" id="vk_showRewardAd" class="btn btn-primary">Show Reward Ad</button>
+						<button type="button" id="vk_showBannerAd" class="btn btn-primary">Show Banner Ad</button>
+						<button type="button" id="vk_hideBannerAd" class="btn btn-primary">Hide Banner Ad</button>
+					</div>
+				</div>
+				
+				<div id="vkplay_ctrls" class="col-sm">
+					<h3>vkplay_API</h3>
+					<div class="btn-group-vertical">
+						<button type="button" id="vkplay_getLoginStatus" class="btn btn-primary">getLoginStatus</button>
+						<button type="button" id="vkplay_userInfo" class="btn btn-primary">userInfo</button>
+						<button type="button" id="vkplay_profile" class="btn btn-primary">profile</button>
+						<button type="button" id="vkplay_register" class="btn btn-primary">register</button>
+						<button type="button" id="vkplay_paymentFrameUrl" class="btn btn-primary">paymentFrameUrl</button>
+						<button type="button" id="vkplay_getAuthToken" class="btn btn-primary">getAuthToken</button>
+						<button type="button" id="vkplay_paymentReceived" class="btn btn-primary">paymentReceived</button>
+						<button type="button" id="vkplay_auth" class="btn btn-primary">auth</button>
+						<button type="button" id="vkplay_showAd" class="btn btn-warning">Show Ad</button>
+					</div>
+				</div>
+				
+				<div id="ok_ctrls" class="col-sm">
+					<h3>OK_API</h3>
+					<div class="btn-group-vertical">
+						<button type="button" id="ok_loadAd" class="btn btn-primary">loadAd (rewarded ad)</button>
+						<button type="button" id="ok_showLoadedAd" class="btn btn-primary">showLoadedAd (rewarded ad)</button>
+						<button type="button" id="ok_showAd" class="btn btn-primary">showAd (interstitial ad)</button>
+						<button type="button" id="ok_requestBannerAds" class="btn btn-primary">requestBannerAds</button>
+						<button type="button" id="ok_showBannerAds" class="btn btn-primary">showBannerAds</button>
+						<button type="button" id="ok_hideBannerAds" class="btn btn-primary">hideBannerAds </button>
+						<button type="button" id="ok_isBannerAdsVisible" class="btn btn-primary">isBannerAdsVisible </button>
+						<button type="button" id="ok_getBannerFormats" class="btn btn-primary">getBannerFormats</button>
+						<button type="button" id="ok_isAdBlockEnabled" class="btn btn-primary">isAdBlockEnabled</button>
+					</div>
+				</div>
+				<div class="info col-sm">
+					<button type="button" id="clearLog" class="btn btn-danger">Clear log</button>
+					<p><span class="sysinfo">Current user status:</span> <span id="status">-</span></p>
+					<div id="log"></div>
+					<iframe src="" id="payment" width="550" height="700" frameborder="0"></iframe>
+				</div>
+				<div class="clear"></div>
+			</div>
+		</div>
+	<script>
+		let vkplayApi = null;
+		let okApi = null;
+		let myGameInstance = null;
+		
+		$(document).ready(function(){
+			chooseSocialApi();
+			
+			$('#clearLog').on('click', function(e) {
+				$('#log').empty();
+			});
+		});
+		
+		function chooseSocialApi(){
+			let socialNetworkCode = '';
+			let parentURL = (window.location != window.parent.location)
+				? document.referrer
+				: document.location.href;
+				
+			addLog("Try parse window.location: ", parentURL);
+			
+			if(parentURL.includes("yandex.ru"))
+			{
+				socialNetworkCode = "YA";
+				$( "#vkplay_ctrls" ).hide();
+				$( "#ok_ctrls" ).hide();
+				$( "#vk_ctrls" ).hide();
+			}
+			
+			if(parentURL.includes("ok.ru"))
+			{
+				socialNetworkCode = "OK";
+				initOKApi();
+				$( "#vkplay_ctrls" ).hide();
+				$( "#vk_ctrls" ).hide();
+			}	
+			
+			if(parentURL.includes("vkplay.ru"))
+			{
+				socialNetworkCode = "VKPLAY";
+				initVKPlayApi();
+				$( "#ok_ctrls" ).hide();
+				$( "#vk_ctrls" ).hide();
+			}	
+			
+			if(parentURL.includes("vk.com"))
+			{
+				socialNetworkCode = "VKPLAY";
+				initVKComApi();
+				$( "#ok_ctrls" ).hide();
+				$( "#vkplay_ctrls" ).hide();
+			}	
+			
+			if(myGameInstance != null)
+				myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', socialNetworkCode);
+			else
+			{
+				console.log("Unity instance not initialized!!!");
+			}
+		}
+		
+		function initOKApi()
+		{
+			addLog("initOKApi", "Инициализация OK API");
+			let rParams = FAPI.Util.getRequestParameters();
+			FAPI.init(rParams["api_server"], rParams["apiconnection"],
+
+				function() {
+					addLog("FAPI.init", "Инициализация OK API прошла успешно");
+					  
+					$('#ok_loadAd').on('click', function(e) {
+						e.preventDefault();
+						FAPI.UI.loadAd();
+					});
+					
+					$('#ok_showLoadedAd').on('click', function(e) {
+						e.preventDefault();
+						FAPI.UI.showLoadedAd();
+					});
+					
+					$('#ok_showAd').on('click', function(e) {
+						e.preventDefault();
+						FAPI.UI.showAd();
+					});
+					
+					$('#ok_requestBannerAds').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("requestBannerAds")
+					});
+					
+					$('#ok_showBannerAds').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("showBannerAds");
+					});
+					
+					$('#ok_hideBannerAds').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("hideBannerAds");
+					});
+					
+					$('#ok_isBannerAdsVisible').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("isBannerAdsVisible");
+					});
+					
+					$('#ok_getBannerFormats').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("getBannerFormats")
+					});
+					
+					$('#ok_isAdBlockEnabled').on('click', function(e) {
+						e.preventDefault();
+						FAPI.invokeUIMethod("isAdBlockEnabled");
+					});
+				},
+
+				function(error) {
+				  addLog("FAPI.init","Ошибка инициализации");
+				}
+			);
+		}
+		
+		function initVKComApi(){
+			vkBridge.send('VKWebAppInit').then((data) => {
+				if (data.result) {
+				  // Обработка события в случае успеха
+				  addLog('VKWebAppInit: ', data);
+				} else {
+				  addLog('VKWebAppInit: ', data);
+				}
+			  })
+			  .catch((error) => {
+					addLog('VKWebAppInit: ', error);
+			  });
+			  
+			$('#vk_loadAd').on('click', function(e) {
+				vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'interstitial' })
+				  .then((data) => {
+					if (data.result) {
+					  addLog('Рекламные материалы загружены (interstitialAd).', data);
+					} else {
+					  addLog('Рекламные материалы не найдены.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppCheckNativeAds error',error); });
+			});
+			
+			$('#vk_showAd').on('click', function(e) {
+				vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'interstitial' })
+				  .then((data) => {
+					if (data.result) {
+						addLog('Реклама показана interstitialAd.',data);
+					} else {
+					  addLog('Ошибка при показе.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppShowNativeAds error',error); });
+			});
+			
+			$('#vk_loadRewardAd').on('click', function(e) {
+				vkBridge.send('VKWebAppCheckNativeAds', { ad_format: 'reward' })
+				  .then((data) => {
+					if (data.result) {
+					  addLog('Рекламные материалы загружены (RewardAd).', data);
+					} else {
+					  addLog('Рекламные материалы не найдены.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppCheckNativeAds error',error); });
+			});
+			
+			$('#vk_showRewardAd').on('click', function(e) {
+				vkBridge.send('VKWebAppShowNativeAds', { ad_format: 'reward' })
+				  .then((data) => {
+					if (data.result) {
+						addLog('Реклама показана rewardAd.',data);
+					} else {
+					  addLog('Ошибка при показе.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppShowNativeAds error',error); });
+			});
+			
+			$('#vk_showBannerAd').on('click', function(e) {
+				vkBridge.send('VKWebAppShowBannerAd', { banner_location: 'bottom' })
+				  .then((data) => {
+					if (data.result) {
+					  addLog('Реклама показана Banner.',data);
+					} else {
+					  addLog('Ошибка при показе баннера.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppShowBannerAd error',error); });
+			});
+			
+			$('#vk_hideBannerAd').on('click', function(e) {
+				vkBridge.send('VKWebAppHideBannerAd')
+				  .then((data) => {
+					if (data.result) {
+					  addLog('Реклама баннером скрыта.',data);
+					} else {
+					  addLog('Ошибка при скрытии баннера.','');
+					}
+				  })
+				  .catch((error) => { addLog('VKWebAppHideBannerAd error',error); });
+			});
+		}
+	
+		function initVKPlayApi() {
+			addLog("initVKPlayApi", "Инициализация VKPlay API");
+		
+			if (typeof window.iframeApi === 'undefined') {
+				console.log('Cannot find iframeApi function, are we inside an iframe?');
+				return;
+			}
+
+			var externalApi = null;
+
+			var callbacks = {
+				appid: 32441,
+
+				getLoginStatusCallback: function(status) {
+					addLog('getLoginStatus', status);
+					var el = document.getElementById('status');
+						el.innerText = status.status;
+				},
+				userInfoCallback: function(info) {addLog('userInfoCallback', info);},
+				userProfileCallback: function(profile) {addLog('userProfileCallback', profile);},
+				registerUserCallback: function(info) { addLog('registerUserCallback', info);},
+				paymentFrameUrlCallback: function(url) {
+					$('#payment').attr('src', url);
+					addLog('paymentFrameUrlCallback', url);
+				},
+				getAuthTokenCallback: function(token) {addLog('getAuthTokenCallback', token);},
+				paymentReceivedCallback: function(data) {addLog('paymentReceivedCallback', data);},
+				paymentWindowClosedCallback: function() {console.log('paymentWindowClosedCallback');},
+				userConfirmCallback: function() {console.log('userConfirmCallback');},
+				paymentFrameItem: function(object) {addLog('paymentFrameItem', object);},
+				getGameInventoryItems: function() {console.log('getGameInventoryItems');},
+				adsCallback: function(context) {addLog('adsCallback', context);},
+				
+			};
+
+			function error(err) {
+				throw new Error('Could not init external api ' + err);
+			}
+
+			function connected(api) {
+				externalApi = api;
+				vkplayApi = api;
+				addLog("initVKPlayApi:connected", "Инициализация VKPlay API прошла успешно");
+			}
+			$('#vkplay_getLoginStatus').on('click', function(e) {
+				e.preventDefault();
+				externalApi.getLoginStatus();
+			});
+			
+			$('#vkplay_userInfo').on('click', function(e) {
+				e.preventDefault();
+				externalApi.userInfo();
+			});
+			
+			// пример получения профиля
+			$('#vkplay_profile').on('click', function(e) {
+				e.preventDefault();
+				externalApi.userProfile();
+			});
+			
+			// пример вызова действия "Регистрация"
+			$('#vkplay_register').on('click', function(e) {
+				e.preventDefault();
+				externalApi.registerUser();
+			});
+			
+			$('#vkplay_paymentFrameUrl').on('click', function(e) {
+				e.preventDefault();
+				externalApi.paymentFrame({
+                'scenario': 'top-up',
+                'merchant_param':{
+                    'virtual_amount': 100,
+                    'amount': 100,
+                    'description': 'Пополнение 100 золотых'
+					}
+				});
+			});
+			
+			$('#vkplay_getAuthToken').on('click', function(e) {
+				e.preventDefault();
+				externalApi.getAuthToken();
+			});
+			
+			$('#vkplay_paymentReceived').on('click', function(e) {
+				e.preventDefault();
+				externalApi.paymentReceived();
+			});
+			
+			// пример вызова действия "Вход"
+			$('#vkplay_auth').on('click', function(e) {
+				e.preventDefault();
+				externalApi.authUser();
+			});
+			
+			$('#vkplay_showAd').on('click', function(e) {
+			//При использовании параметра interstitial: true ролик будет показан без футера и сообщений, связанных с получением вознаграждения. 
+			//При значении false или undefined будет выбрано стандартное поведение (т.е. будет показана реклама в формате advideoreward). 
+				config =
+				  {
+					  //sources: ['admanSource,admanagerSource' | 'admanSource' | 'admanagerSource'],
+					  sources: 'admanSource',
+					  interstitial: false
+				  }
+				e.preventDefault();
+				externalApi.showAds();
+			});
+		
+
+			window.iframeApi(callbacks).then(connected, error);
+		}
+		
+		function addLog(method, data){
+			$('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
+		}
+		
+		function showAdd()
+		{
+			if(vkplayApi != null)
+				vkplayApi.showAds();
+			if(FAPI != null)
+				FAPI.UI.showAd();
+		}
+		
+		function API_callback(method, result, data)
+		{
+			addLog(method, data);
+		}
+		
+	</script>
+    </body>
+</html>
