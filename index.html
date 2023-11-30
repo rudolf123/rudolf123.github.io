@@ -100,6 +100,10 @@
 		
 		$(document).ready(function(){
 			chooseSocialApi();
+			
+			$('#clearLog').on('click', function(e) {
+				$('#log').empty();
+			});
 		});
 		
 		function chooseSocialApi(){
@@ -403,10 +407,7 @@
 				e.preventDefault();
 				externalApi.showAds();
 			});
-			
-			$('#clearLog').on('click', function(e) {
-				$('#log').empty();
-			});
+		
 
 			window.iframeApi(callbacks).then(connected, error);
 		}
