@@ -127,6 +127,20 @@
 	
 	$(document).ready(function(){
 		chooseSocialApi();
+		window.OK_API_callback = function(method, result, data){
+			addLog( method + ":result:",  result);
+			addLog( method + ":data:",  data);
+			switch (method) {
+			  case 'showLoadedAd':
+				if(result == 'ok' && data == 'complete')
+					myGameInstance.SendMessage('SocialApiManager', 'OnShowRewardAd', JSON.stringify(window.ok_rewardad_id));
+				else
+					myGameInstance.SendMessage('SocialApiManager', 'OnShowRewardAd', JSON.stringify(-1));					
+				break;
+			  default:
+				addLog( "Not implement case for : " + method);
+			}
+		}
 	});
 	
 	function chooseSocialApi(){
@@ -153,6 +167,12 @@
 	function addLog(method, data){
 		console.log("JAVASCRIPT LOG: " + method + ":" + JSON.stringify(data));
 		//$('#log').append('<p><span class="sysinfo">Called method:</span> <span class="method">' + method + '</span><br/><span class="sysinfo">Response:</span><br/><span class="response">' + JSON.stringify(data) + '</span></p>');
+	}
+	
+	function API_callback(method, result, data)
+	{
+		addLog(method, data);
+		window.OK_API_callback(method, result, data);
 	}
     </script>
   </body>
