@@ -168,7 +168,7 @@
             progressBarFull.style.width = `${100 * progress}%`;
         }).then((unityInstance) => {
             myGameInstance = unityInstance;
-			myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', window.socialNetworkCode);
+			//myGameInstance.SendMessage('SocialApiManager', 'SetSocialNetwork', window.socialNetworkCode);
             loadingCover.style.display = "none";
         }).catch((message) => {
             alert(message);
